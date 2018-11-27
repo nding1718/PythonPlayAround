@@ -1,3 +1,13 @@
+This paragraph comes from "A Simple Web Server --- Greg Wilson" an article of the the book "500 lines or less"  
+
+“”“
+    Almost every program on web runs on a family of communication standards callecd Internet Protocol(IP) and we concern one of them (Transmission Control Protocol) TCP/IP.
+    It makes communication between computers look like read and wrinting files
+
+    Prorgrams using IP communicate through sockets. And each socket is one end of a point-to-point communication channel. A socket consists of an IP address that identifies a particular machine
+    and a port number on that machine
+”“”
+
 import BaseHTTPServer
 import os
 
