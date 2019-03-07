@@ -9,16 +9,46 @@ from snippets.serializers import SnippetSerializer, UserSerializer
 from django.http import Http404
 
 from rest_framework.views import APIView
-
 from rest_framework import generics
-
 from rest_framework import permissions
+from rest_framework import renderers
+
+
+from rest_framework.decorators import api_view
+from rest_framework.reverse import reverse
 
 from django.contrib.auth.models import User
 
 from snippets.permissions import IsOwnerOrReadOnly
 
 # Create your views here.
+
+
+"""
+	Use method view to create an endpoint for the root of our API
+"""
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('user-list', request=request, format=format),
+        'snippets': reverse('snippet-list', request=request, format=format)
+    })
+
+
+class SnippetHighlight(generics.GenericAPIView):
+	"""
+		since we will not return a whole object, but a field of a model, we need to customize our own get method
+	"""
+	queryset = Snippet.objects.all()
+	renderer_classes = (renderers.StaticHTMLRenderer,)
+
+	def get(self, request, *args, **kwargs):
+		snippet = self.get_object()
+		return Response(snippet.highlighted)
+
+
+
+
 
 
 class UserList(generics.ListAPIView):
@@ -35,9 +65,10 @@ class SnippetList(APIView):
 	def perform_create(self, serializer):
 		serializer.save(owner=self.request.user)
 
-	def get(self, reuqest, format=None):
+	def get(self, request, format=None):
 		snippets = Snippet.objects.all()
-		serializer = SnippetSerializer(snippets, many=True)
+		# need pass the request as a context and careful don't let it be a set!!
+		serializer = SnippetSerializer(snippets, many=True, context={'request':request})
 		return Response(serializer.data)
 
 	def post(self, request, format=None):
@@ -46,9 +77,6 @@ class SnippetList(APIView):
 			self.perform_create(serializer)
 			return Response(serializer.data, status=status.HTTP_201_CREATED)
 		return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-
-	
 
 
 
@@ -64,7 +92,7 @@ class SnippetDetail(APIView):
 
 	def get(self, request, pk, format=None):
 		snippet = self.get_object(pk)
-		serializer = SnippetSerializer(snippet)
+		serializer = SnippetSerializer(snippet, context={"request": request})
 		return Response(serializer.data)
 
 	def put(self, request, pk,  format=None):
